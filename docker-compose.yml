@@ -1,0 +1,53 @@
+# Запуск бота вместе с PostgreSQL.
+# Переменные берутся из .env (не коммитится); .env.example — шаблон.
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: shopbot-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-shop_bot}
+      POSTGRES_USER: ${DB_USER:-shop_bot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD не задан в .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # Бот не стартует, пока БД не готова принимать соединения:
+      # миграции в entrypoint иначе упадут на гонке.
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-shop_bot} -d ${DB_NAME:-shop_bot}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - shopbot
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: shopbot-bot
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Внутри compose БД доступна по имени сервиса, а не по localhost.
+      DB_HOST: db
+      DB_PORT: 5432
+    env_file:
+      - .env
+    # Миграции накатываются перед стартом: контейнер всегда поднимается
+    # на актуальной схеме, ручной шаг забывается и ломает прод.
+    command: >
+      sh -c "alembic upgrade head && python main.py"
+    networks:
+      - shopbot
+
+volumes:
+  pgdata:
+
+networks:
+  shopbot:
+    driver: bridge

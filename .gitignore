@@ -1,0 +1,27 @@
+# Виртуальное окружение
+.venv/
+venv/
+
+# Секреты — только .env, он не коммитится
+.env
+.env.*
+!.env.example
+
+# Кэш Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Логи и локальные данные
+*.log
+data/
+pgdata/
+
+# IDE
+.idea/
+.vscode/

@@ -1,0 +1,24 @@
+# Без этого файла в образ уезжают .venv (сотни МБ), .git и секреты.
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.git/
+.gitignore
+.env
+.env.*
+!.env.example
+*.log
+data/
+pgdata/
+docs/
+tests/
+.idea/
+.vscode/
+Dockerfile
+docker-compose.yml
+README.md
+CLAUDE.md
