@@ -26,7 +26,7 @@ from aiogram.types import (
 from bot.handlers import admin, catalog, commands, errors, payment
 from bot.i18n import RUSSIAN, translate
 
-USER_COMMANDS = ("start", "catalog", "purchases", "help", "language", "cancel")
+USER_COMMANDS = ("start", "catalog", "purchases", "help", "cancel")
 ADMIN_COMMANDS = ("admin", "products", "add_product", "broadcast")
 """Команды, показываемые Telegram в меню «/».``"""
 

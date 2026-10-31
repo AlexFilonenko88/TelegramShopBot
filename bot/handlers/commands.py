@@ -1,7 +1,7 @@
 """Хендлеры команд и reply-меню: точки входа пользователя.
 
 ``/start`` (в том числе с deep-link на товар), ``/help``, ``/catalog``,
-``/language``, ``/cancel`` и нажатия кнопок главного меню.
+``/cancel`` и нажатия кнопок главного меню.
 
 Кнопки reply-меню Telegram отдаёт обычным текстом, поэтому нажатие
 разбирается по подписям обоих языков
@@ -21,20 +21,17 @@ from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.filters.command import CommandObject
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import Message
 
 from bot.handlers.catalog import (
     open_product_card,
     render_catalog,
     render_purchases,
 )
-from bot.handlers.common import safe_edit
-from bot.i18n import available_languages, translate
-from bot.keyboards.callback_data import NavCallback
-from bot.keyboards.inline import language_keyboard
+from bot.i18n import translate
 from bot.keyboards.reply import main_menu_keyboard, resolve_menu_action
 from bot.services.product_service import ProductService
-from bot.services.user_service import UserProfile, UserService
+from bot.services.user_service import UserProfile
 
 logger = logging.getLogger(__name__)
 
@@ -114,50 +111,6 @@ async def handle_purchases_command(
 ) -> None:
     """``/purchases``: история покупок (тот же код, что и кнопка меню)."""
     await render_purchases(message, profile, language, product_service)
-
-
-@router.message(Command("language"))
-async def handle_language_command(
-    message: Message,
-    language: str,
-    profile: UserProfile,
-) -> None:
-    """``/language``: выбор языка, если включён режим ``all``."""
-    if len(available_languages()) < 2:
-        # Один разрешённый язык: показывать переключатель бессмысленно.
-        await message.answer(
-            translate("cmd.help", language),
-            reply_markup=main_menu_keyboard(language),
-        )
-        return
-    await message.answer(
-        translate("menu.language", language),
-        reply_markup=language_keyboard(profile.language),
-    )
-
-
-@router.callback_query(NavCallback.filter(F.action.startswith("lang_")))
-async def handle_language_choice(
-    callback: CallbackQuery,
-    callback_data: NavCallback,
-    language: str,
-    user_service: UserService,
-) -> None:
-    """Сохраняет выбор языка и перерисовывает кнопки с галочкой."""
-    code = callback_data.action.removeprefix("lang_")
-    if code not in available_languages():
-        await callback.answer(
-            translate("common.keyboard_dismissed", language),
-            show_alert=True,
-        )
-        return
-    await user_service.set_language(callback.from_user.id, code)
-    await safe_edit(
-        callback.message,
-        translate("cmd.start", code, name=callback.from_user.first_name),
-        language_keyboard(code),
-    )
-    await callback.answer()
 
 
 @router.message(Command("cancel"))
